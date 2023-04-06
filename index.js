@@ -1,7 +1,24 @@
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require('mongoose')
 const app = express()
+
+//AUTHENTICATION
+const password = process.argv[2]
+
+const url =
+    `mongodb+srv://shadowshakya:${password}@fullstackcluster.ba2p0xn.mongodb.net/?retryWrites=true&w=majority`
+
+mongoose.set('strictQuery',false)
+mongoose.connect(url)
+
+const personSchema = new mongoose.Schema({
+    name: String, 
+    number: String
+})
+
+const Person = mongoose.model('Person', personSchema)
 
 //MIDDLEWARE
 const requestLogger = (request, response, next) =>{
@@ -20,6 +37,7 @@ app.use(express.json())
 app.use(cors())
 app.use(requestLogger)
 app.use(morgan('tiny'))
+app.use(express.static('build'))
 
 const persons = [
     { 
@@ -45,12 +63,15 @@ const persons = [
 ]
 
 //GET
+
 app.get('/', (request, response) => {
     response.send('<h1>Hello World!</h1>')
 })
 
 app.get ('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find({}).then(person => {
+        response.json(person)
+    })
 })  
 
 app.get ('/info', (request, response) => {
